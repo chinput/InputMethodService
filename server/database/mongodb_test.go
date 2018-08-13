@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"code.aliyun.com/JRY/mtquery/module/mtype"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type person struct {
@@ -14,7 +14,7 @@ type person struct {
 }
 
 func TestMongodb(t *testing.T) {
-	s, err := New("mongo", "localhost:27017", "mydb")
+	s, err := New("localhost:27017", "mydb")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,7 +29,7 @@ func TestMongodb(t *testing.T) {
 		Update:    nil,
 		Quto:      0,
 	}
-	result := make([]mtype.IM, 10)
+	result := make([]bson.M, 10)
 	s.QueryInit(&query)
 	s.Insert()
 	s.QueryInit(&query)

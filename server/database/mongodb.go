@@ -6,16 +6,14 @@ import (
 	"reflect"
 	"strings"
 
-	"code.aliyun.com/JRY/mtquery/module/mtype"
-
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
 type MmongoQuery struct {
-	Condition mtype.IM
-	Data      mtype.IM
-	Update    mtype.IM
+	Condition bson.M
+	Data      bson.M
+	Update    bson.M
 	Id        bson.ObjectId
 	Limit     int
 	Skip      int
@@ -147,7 +145,7 @@ func (m *Mmongo) QueryInit(query *DataBaseQuery) (err error) {
 	return err
 }
 
-func (m *Mmongo) Find(result []mtype.IM) (err error) {
+func (m *Mmongo) Find(result []bson.M) (err error) {
 	if m.Execed == 0 {
 		err = m.DbCollection.
 			Find(m.MQuery.Condition).
@@ -169,9 +167,9 @@ func (m *Mmongo) Find(result []mtype.IM) (err error) {
 	return err
 }
 
-func (m *Mmongo) FindLike(result []mtype.IM) (err error) {
+func (m *Mmongo) FindLike(result []bson.M) (err error) {
 	var (
-		newcond mtype.IM
+		newcond bson.M
 		realnum int
 	)
 	if m.Execed == 0 {
@@ -189,12 +187,12 @@ func (m *Mmongo) FindLike(result []mtype.IM) (err error) {
 				realnum = 0
 				for i := 0; i < num; i++ {
 					if conds[i] != "" {
-						condsarr[realnum] = mtype.IM{key: mtype.IM{"$regex": conds[i], "$options": "i"}}
+						condsarr[realnum] = bson.M{key: bson.M{"$regex": conds[i], "$options": "i"}}
 						realnum++
 					}
 				}
 
-				newcond = mtype.IM{"$or": condsarr}
+				newcond = bson.M{"$or": condsarr}
 				break
 			}
 			m.MQuery.Condition = newcond
@@ -205,6 +203,17 @@ func (m *Mmongo) FindLike(result []mtype.IM) (err error) {
 	} else {
 		return fmt.Errorf("need init")
 	}
+}
+
+func Struct2Map(obj interface{}) bson.M {
+	t := reflect.TypeOf(obj)
+	v := reflect.ValueOf(obj)
+	var data = make(bson.M)
+	for i := 0; i < t.NumField(); i++ {
+		key := strings.ToLower(t.Field(i).Name)
+		data[key] = v.Field(i).Interface()
+	}
+	return data
 }
 
 func (m *Mmongo) Insert() (id string, err error) {
@@ -221,10 +230,9 @@ func (m *Mmongo) Insert() (id string, err error) {
 
 		t := reflect.TypeOf(m.Query.Data)
 		if reflect.TypeOf(m.MQuery.Data) != t {
-			insDataAddr := mtype.Struct2Map(m.Query.Data)
-			m.MQuery.Data = *insDataAddr
+			m.MQuery.Data = Struct2Map(m.Query.Data)
 		} else {
-			m.MQuery.Data = m.Query.Data.(mtype.IM)
+			m.MQuery.Data = m.Query.Data.(bson.M)
 		}
 		m.MQuery.Data["_id"] = m.MQuery.Id
 		err = m.DbCollection.Insert(m.MQuery.Data)
@@ -285,7 +293,7 @@ func (m *Mmongo) Delete() (err error) {
 
 func (m *Mmongo) InsertIfNotExist() (Id string, err error) {
 	var (
-		result = make([]mtype.IM, 1)
+		result = make([]bson.M, 1)
 	)
 	if m.Execed == 0 {
 		m.MQuery.Limit = 1
@@ -335,9 +343,9 @@ func (m *Mmongo) initUpdate() error {
 		err error
 	)
 	if m.Query.Quto == 2 {
-		m.MQuery.Update = mtype.IM{"$inc": m.Query.Update}
+		m.MQuery.Update = bson.M{"$inc": m.Query.Update}
 	} else {
-		m.MQuery.Update = mtype.IM{"$set": m.Query.Update}
+		m.MQuery.Update = bson.M{"$set": m.Query.Update}
 	}
 	if Id, Found := m.Query.Update["_id"]; Found {
 		m.MQuery.Update["_id"], err = m.string2Id(Id)

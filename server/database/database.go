@@ -1,21 +1,18 @@
 package database
 
-import (
-	"code.aliyun.com/JRY/mtquery/module/merror"
-	"code.aliyun.com/JRY/mtquery/module/mtype"
-)
+import "gopkg.in/mgo.v2/bson"
 
 type OrderBy map[string]int
 
 type DataBaseQuery struct {
 	Id        string
 	TableName string
-	Condition mtype.IM
+	Condition bson.M
 	Limit     int
 	Skip      int
 	OrderBy   OrderBy
 	Data      interface{}
-	Update    mtype.IM
+	Update    bson.M
 	Quto      int
 }
 
@@ -26,8 +23,8 @@ type DataBaser interface {
 	Open(dbhost string, dbname string) error
 	Close() error
 	QueryInit(query *DataBaseQuery) error
-	Find(result []mtype.IM) error
-	FindLike(result []mtype.IM) error
+	Find(result []bson.M) error
+	FindLike(result []bson.M) error
 	Insert() (string, error)
 	Update() error
 	UpdateAll() error
@@ -35,27 +32,10 @@ type DataBaser interface {
 	InsertIfNotExist() (string, error)
 }
 
-func New(dbtype string, dbhost string, dbname string) (DataBaser, error) {
+func New(dbhost string, dbname string) (DataBaser, error) {
 	var (
 		conn DataBaser
-		err  error
 	)
-	err = nil
-	if dbtype == "mongo" {
-		var newCon Mmongo
-		conn = &newCon
-	} else if dbtype == "mysql" {
-		var newCon Mmysql
-		conn = &newCon
-	} else {
-		err = merror.New("dbtypeerr",
-			"database type invalid,need mongo/mysql, given is %s",
-			dbtype)
-		conn = nil
-	}
-
-	if err == nil {
-		err = conn.Open(dbhost, dbname)
-	}
-	return conn, err
+	conn = new(Mmongo)
+	return conn, conn.Open(dbhost, dbname)
 }
