@@ -1,0 +1,11 @@
+*
+/*/*
+
+
+!*.go
+!*.md
+!.gitignore
+!Makefile
+!/*/
+!/*/*.go
+!/*/*.md
