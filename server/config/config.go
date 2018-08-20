@@ -23,10 +23,11 @@ type Config struct {
 	TimePattern string `toml:"time_pattern"`
 
 	// 邮箱相关
-	EmailHost    string `toml:"email_host"`
-	EmailUser    string `toml:"email_user"`
-	EmailPass    string `toml:"email_pass"`
-	EmailTimeout int64  `toml:"email_timeout"`
+	EmailHost string `toml:"email_host"`
+	EmailUser string `toml:"email_user"`
+	EmailPass string `toml:"email_pass"`
+	// 邮件发送最短间隔，单位 ms
+	EmailTimeout int64 `toml:"email_timeout"`
 }
 
 var cfg *Config
