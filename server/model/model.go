@@ -1,12 +1,10 @@
-package mmodel
+package model
 
 import (
-	"reflect"
+	"errors"
 
-	"./database"
+	"github.com/chinput/InputMethodService/server/model/database"
 	"gopkg.in/mgo.v2/bson"
-
-	"code.aliyun.com/JRY/mtquery/module/merror"
 )
 
 type Model struct {
@@ -72,7 +70,7 @@ func New() *Model {
 	if !inited {
 		return nil
 	}
-	model.Db, err = database.New(confDb.Dbtype, confDb.Dbhost, confDb.Dbname)
+	model.Db, err = database.New(confDb.Dbhost, confDb.Dbname)
 	if err != nil {
 		return nil
 	}
@@ -103,10 +101,10 @@ func (m *Model) Copy(tb string) (*Model, error) {
 			model.TbName = tb
 			model.Db = m.Db
 		} else {
-			err = merror.New("model_not_init", "old model not init")
+			err = errors.New("model_not_init" + "old model not init")
 		}
 	} else {
-		err = merror.New("tbname_empty", "table name is empty")
+		err = errors.New("tbname_empty" + "table name is empty")
 	}
 	return &model, err
 }
@@ -212,7 +210,7 @@ func (m *Model) FindManyFromOtherTable(table string, cond bson.M, skip ...int) (
 		err    error
 	)
 	if table == "" {
-		return nil, merror.New("tbname_empty", "table name is empty")
+		return nil, errors.New("tbname_empty" + "table name is empty")
 	} else {
 		query.TableName = table
 	}
@@ -247,7 +245,7 @@ func (m *Model) FindOneFromOtherTable(table string, cond bson.M) (*bson.M, error
 	if table != "" {
 		query.TableName = table
 	} else {
-		return nil, merror.New("tbname_empty", "table name is empty")
+		return nil, errors.New("tbname_empty" + "table name is empty")
 	}
 	query.Skip = 0
 	if cond != nil {
@@ -301,8 +299,6 @@ func (m *Model) Add(data bson.M, id2 ...string) string {
 			insData = data.(bson.M)
 		}
 	*/
-	t := reflect.TypeOf(data)
-
 	query.Data = data
 
 	if len(id2) == 1 {
@@ -328,7 +324,7 @@ func (m *Model) AddToOtherTable(table string, data bson.M) (string, error) {
 	if table != "" {
 		query.TableName = table
 	} else {
-		return "", merror.New("tbname_empty", "table name is empty")
+		return "", errors.New("tbname_empty" + "table name is empty")
 	}
 	err = m.Db.QueryInit(query)
 	if err != nil {
