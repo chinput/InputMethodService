@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"code.aliyun.com/JRY/mtquery/module/mtype"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func TestModel(t *testing.T) {
@@ -22,7 +22,7 @@ func TestModel(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	u.Add(mtype.IM{"name": "Bob", "phone": "123456"})
+	u.Add(bson.M{"name": "Bob", "phone": "123456"})
 	data := u.FindOne(nil)
 	fmt.Println(data)
 }
