@@ -284,34 +284,16 @@ func (m *Model) FindViaPage(page ...int) *[]bson.M {
 	return m.FindMany(nil, skip)
 }
 
-func (m *Model) Add(data bson.M, id2 ...string) string {
+func (m *Model) Add(data interface{}, id2 ...string) (string, error) {
 	var (
 		query = m.newQuery()
-		id    string
-		err   error
 	)
-	/*
-		t := reflect.TypeOf(data)
-		if reflect.TypeOf(insData) != t {
-			insDataAddr := mtype.Struct2Map(data)
-			insData = *insDataAddr
-		} else {
-			insData = data.(bson.M)
-		}
-	*/
 	query.Data = data
-
-	if len(id2) == 1 {
-		query.Id = id2[0]
-	}
-
-	err = m.Db.QueryInit(query)
+	err := m.Db.QueryInit(query)
 	if err != nil {
-		id = ""
-		return id
+		return "", err
 	}
-	id, err = m.Db.Insert()
-	return id
+	return m.Db.Insert()
 }
 
 func (m *Model) AddToOtherTable(table string, data bson.M) (string, error) {

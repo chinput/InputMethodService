@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/chinput/InputMethodService/server/config"
 	"github.com/chinput/InputMethodService/server/model"
 )
 
@@ -30,8 +31,8 @@ func newAuth(m model.Modeler) *Auth {
 
 func ConnectDB() {
 	conf := model.InitConf{
-		Dbhost:    "localhost",
-		Dbname:    "tttdd",
+		Dbhost:    config.DBUrl(),
+		Dbname:    config.DBName(),
 		Dbtype:    "mongo",
 		Findlimit: 10,
 	}

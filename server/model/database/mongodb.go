@@ -1,8 +1,8 @@
 package database
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
 
@@ -145,64 +145,67 @@ func (m *Mmongo) QueryInit(query *DataBaseQuery) (err error) {
 	return err
 }
 
-func (m *Mmongo) Find(result []bson.M) (err error) {
-	if m.Execed == 0 {
-		err = m.DbCollection.
-			Find(m.MQuery.Condition).
-			Limit(m.MQuery.Limit).
-			Skip(m.MQuery.Skip).
-			Sort(m.MQuery.OrderBy).
-			All(&result)
-		if err != nil {
-			return err
-		}
-
-		for i := 0; i < len(result); i++ {
-			result[i]["_id"] = m.id2String(result[i]["_id"].(bson.ObjectId))
-		}
-		m.Execed = 1
-	} else {
-		err = fmt.Errorf("need init")
+func (m *Mmongo) Find(result []bson.M) error {
+	if m.Execed != 0 {
+		return errors.New("need init")
 	}
-	return err
+	err := m.DbCollection.
+		Find(m.MQuery.Condition).
+		Limit(m.MQuery.Limit).
+		Skip(m.MQuery.Skip).
+		Sort(m.MQuery.OrderBy).
+		All(&result)
+	m.Execed = 1
+
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(result); i++ {
+		result[i]["_id"] = m.id2String(result[i]["_id"].(bson.ObjectId))
+	}
+	return nil
 }
 
-func (m *Mmongo) FindLike(result []bson.M) (err error) {
+func (m *Mmongo) FindLike(result []bson.M) error {
 	var (
 		newcond bson.M
 		realnum int
 	)
-	if m.Execed == 0 {
-		if m.MQuery.Condition != nil {
-			for key, data := range m.MQuery.Condition {
-				datastr := data.(string)
-				conds := strings.Split(datastr, " ")
-				num := len(conds)
-				for i := 0; i < num; i++ {
-					if conds[i] != "" {
-						realnum++
-					}
-				}
-				condsarr := make([]interface{}, realnum)
-				realnum = 0
-				for i := 0; i < num; i++ {
-					if conds[i] != "" {
-						condsarr[realnum] = bson.M{key: bson.M{"$regex": conds[i], "$options": "i"}}
-						realnum++
-					}
-				}
 
-				newcond = bson.M{"$or": condsarr}
-				break
-			}
-			m.MQuery.Condition = newcond
-		}
-
-		return m.Find(result)
-
-	} else {
-		return fmt.Errorf("need init")
+	if m.Execed != 0 {
+		return errors.New("need init")
 	}
+
+	if m.MQuery.Condition != nil {
+		for key, data := range m.MQuery.Condition {
+			datastr := data.(string)
+			conds := strings.Split(datastr, " ")
+			num := len(conds)
+			for i := 0; i < num; i++ {
+				if conds[i] != "" {
+					realnum++
+				}
+			}
+			condsarr := make([]interface{}, realnum)
+			realnum = 0
+			for i := 0; i < num; i++ {
+				if conds[i] != "" {
+					condsarr[realnum] = bson.M{key: bson.M{"$regex": conds[i], "$options": "i"}}
+					realnum++
+				}
+			}
+
+			newcond = bson.M{"$or": condsarr}
+			break
+		}
+		m.MQuery.Condition = newcond
+	}
+
+	m.Execed = 1
+
+	return m.Find(result)
+
 }
 
 func Struct2Map(obj interface{}) bson.M {
@@ -217,108 +220,93 @@ func Struct2Map(obj interface{}) bson.M {
 }
 
 func (m *Mmongo) Insert() (id string, err error) {
-	if m.Execed == 0 {
-
-		if len(m.MQuery.Id) == 0 {
-			m.MQuery.Id = bson.NewObjectId()
-			//log.Println(m.Query.Data)
-			log.Println(false, m.MQuery.Id)
-		} else {
-			log.Println(true, m.MQuery.Id)
-			//	m.MQuery.Id = bson.ObjectIdHex(m.Query.Id)
-		}
-
-		t := reflect.TypeOf(m.Query.Data)
-		if reflect.TypeOf(m.MQuery.Data) != t {
-			m.MQuery.Data = Struct2Map(m.Query.Data)
-		} else {
-			m.MQuery.Data = m.Query.Data.(bson.M)
-		}
-		m.MQuery.Data["_id"] = m.MQuery.Id
-		err = m.DbCollection.Insert(m.MQuery.Data)
-		if err != nil {
-			return "", err
-		}
-		id = m.id2String(m.MQuery.Id)
-		m.Execed = 1
-	} else {
-		id = ""
-		err = fmt.Errorf("need init")
+	if m.Execed != 0 {
+		return "", errors.New("need init")
 	}
 
-	return id, err
+	newId := bson.NewObjectId()
+	t := reflect.TypeOf(m.Query.Data)
+
+	if reflect.TypeOf(m.MQuery.Data) != t {
+		m.MQuery.Data = Struct2Map(m.Query.Data)
+	} else {
+		m.MQuery.Data = m.Query.Data.(bson.M)
+	}
+
+	m.MQuery.Data["_id"] = newId
+
+	err = m.DbCollection.Insert(m.MQuery.Data)
+
+	m.Execed = 1
+
+	if err != nil {
+		return "", err
+	}
+
+	return newId.Hex(), nil
 }
 
 func (m *Mmongo) Update() (err error) {
-	if m.Execed == 0 {
-		m.initUpdate()
-		err = m.DbCollection.Update(m.MQuery.Condition, m.MQuery.Update)
-		if err != nil {
-			return err
-		}
-		m.Execed = 1
-	} else {
-		err = fmt.Errorf("need init")
+	if m.Execed != 0 {
+		return errors.New("need init")
 	}
-	return err
+
+	m.initUpdate()
+	m.Execed = 1
+	return m.DbCollection.Update(m.MQuery.Condition, m.MQuery.Update)
 }
 
-func (m *Mmongo) UpdateAll() (err error) {
-	if m.Execed == 0 {
-		m.initUpdate()
-		_, err = m.DbCollection.UpdateAll(m.MQuery.Condition, m.MQuery.Update)
-		if err != nil {
-			return err
-		}
-		m.Execed = 1
-	} else {
-		err = fmt.Errorf("need init")
+func (m *Mmongo) UpdateAll() error {
+	if m.Execed != 0 {
+		return errors.New("need init")
 	}
+
+	m.initUpdate()
+	m.Execed = 1
+	_, err := m.DbCollection.UpdateAll(m.MQuery.Condition, m.MQuery.Update)
 	return err
 }
 
 func (m *Mmongo) Delete() (err error) {
-	if m.Execed == 0 {
-		err = m.DbCollection.Remove(m.MQuery.Condition)
-		m.Execed = 1
-		if err != nil {
-			return err
-		}
-	} else {
-		err = fmt.Errorf("need init")
+	if m.Execed != 0 {
+		return errors.New("need init")
 	}
 
-	return err
+	m.Execed = 1
+	return m.DbCollection.Remove(m.MQuery.Condition)
 }
 
-func (m *Mmongo) InsertIfNotExist() (Id string, err error) {
+func (m *Mmongo) InsertIfNotExist() (string, error) {
 	var (
 		result = make([]bson.M, 1)
 	)
-	if m.Execed == 0 {
-		m.MQuery.Limit = 1
-		err = m.Find(result)
-		if err != nil {
-			return "", err
-		}
-		if result[0] == nil {
-			m.MQuery.Data = m.Query.Condition
-			m.MQuery.Id = bson.NewObjectId()
-			m.MQuery.Data["_id"] = m.MQuery.Id
-			err = m.DbCollection.Insert(m.MQuery.Data)
-			if err != nil {
-				return "", err
-			}
-			Id = m.id2String(m.MQuery.Id)
-			m.Execed = 1
-		} else {
-			Id = result[0]["_id"].(string)
-		}
-	} else {
-		Id = "0"
-		err = fmt.Errorf("need init")
+
+	if m.Execed != 0 {
+		return "", errors.New("need init")
 	}
-	return Id, err
+
+	m.MQuery.Limit = 1
+	err := m.Find(result)
+	m.Execed = 1
+
+	if err != nil {
+		return "", err
+	}
+
+	if result[0] != nil {
+		Id := result[0]["_id"].(string)
+		return Id, nil
+	}
+
+	m.MQuery.Data = m.Query.Condition
+	newId := bson.NewObjectId()
+	m.MQuery.Data["_id"] = newId
+	err = m.DbCollection.Insert(m.MQuery.Data)
+	if err != nil {
+		return "", err
+	}
+
+	return newId.Hex(), nil
 }
 
 func (m *Mmongo) initCondition() error {

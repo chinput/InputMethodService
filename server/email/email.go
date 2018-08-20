@@ -49,7 +49,7 @@ func (e *emailQueue) Send(emailType int, key_data string, to string) {
 	}
 }
 
-// 设置为最快多少秒钟发送一次
+// 设置为最快多长时间发送一次
 // 最低 10 ms
 func (e *emailQueue) Guard() {
 	max := len(emailType)
