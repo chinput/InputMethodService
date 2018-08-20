@@ -2,9 +2,6 @@ package config
 
 import (
 	"encoding/base64"
-	"log"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -18,13 +15,18 @@ type Config struct {
 
 	// 用来加密用的秘钥
 	SecretKey string `toml:"secret_key"`
+	// des 加密模式 ECB/CBC
+	EncType string `toml:"enc_type"`
 
 	// 目录格式
 	// 比如 data/2006/01/02/
 	TimePattern string `toml:"time_pattern"`
 
-	// des 加密模式 ECB/CBC
-	EncType string `toml:"enc_type"`
+	// 邮箱相关
+	EmailHost    string `toml:"email_host"`
+	EmailUser    string `toml:"email_user"`
+	EmailPass    string `toml:"email_pass"`
+	EmailTimeout int64  `toml:"email_timeout"`
 }
 
 var cfg *Config
@@ -38,15 +40,9 @@ var (
 	kSecretKey []byte
 )
 
-func init() {
+func Init(configPath string) {
 	cfg = new(Config)
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatal(err)
-	}
-	configPath := filepath.Join(dir, "config.toml")
 	toml.DecodeFile(configPath, cfg)
-
 	kSecretKey = []byte(cfg.SecretKey)
 }
 
@@ -95,4 +91,8 @@ func DecodeB64(data string) ([]byte, error) {
 	}
 
 	return Decode(tmp)
+}
+
+func EmailConfig() (string, string, string, int64) {
+	return cfg.EmailHost, cfg.EmailUser, cfg.EmailPass, cfg.EmailTimeout
 }
