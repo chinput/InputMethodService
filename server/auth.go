@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"code.aliyun.com/JRY/mtquery/module/mmodel"
+	"github.com/chinput/InputMethodService/server/model"
 )
 
 func init() {
@@ -11,7 +11,7 @@ func init() {
 }
 
 type Auth struct {
-	*mmodel.Model
+	*model.Model
 }
 
 type DataAuth struct {
@@ -23,21 +23,21 @@ type DataAuth struct {
 	Register_Time uint64 `json:"register_time" bson:"register_time"`
 }
 
-func newAuth(m mmodel.Modeler) *Auth {
+func newAuth(m model.Modeler) *Auth {
 	mm := newConnetction(TABLE_Auth, m)
 	return &Auth{mm}
 }
 
 func ConnectDB() {
-	conf := mmodel.InitConf{
+	conf := model.InitConf{
 		Dbhost:    "localhost",
 		Dbname:    "tttdd",
 		Dbtype:    "mongo",
 		Findlimit: 10,
 	}
 	//	c, error := database.New("mongo", "localhost:27017", "test")
-	mmodel.InitByHand(conf)
-	m := mmodel.New()
+	model.InitByHand(conf)
+	m := model.New()
 	defer m.End()
 
 	user, err := m.Copy("user")
