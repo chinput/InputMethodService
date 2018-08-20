@@ -3,10 +3,10 @@ package mmodel
 import (
 	"reflect"
 
-	"code.aliyun.com/JRY/mtquery/module/database"
+	"./database"
+	"gopkg.in/mgo.v2/bson"
+
 	"code.aliyun.com/JRY/mtquery/module/merror"
-	"code.aliyun.com/JRY/mtquery/module/mlog"
-	"code.aliyun.com/JRY/mtquery/module/mtype"
 )
 
 type Model struct {
@@ -22,12 +22,12 @@ type Modeler interface {
 type DataBaseQuery struct {
     Id        string
     TableName string
-    Condition mtype.IM
+    Condition bson.M
     Limit     int
     Skip      int
     OrderBy   OrderBy
     Data      interface{}
-    Update    mtype.IM
+    Update    bson.M
     Quto      int //2 for add ,others for set
 }
 type DataBaser interface {
@@ -37,7 +37,7 @@ type DataBaser interface {
     Open(dbhost string, dbname string) error
     Close() error
     QueryInit(query *DataBaseQuery) error
-    Find(result []mtype.IM) error
+    Find(result []bson.M) error
     Insert() (string, error)
     Update() error
     UpdateAll() error
@@ -73,16 +73,15 @@ func New() *Model {
 		return nil
 	}
 	model.Db, err = database.New(confDb.Dbtype, confDb.Dbhost, confDb.Dbname)
-	mlog.SaveErr(err)
 	if err != nil {
 		return nil
 	}
 	return &model
 }
 
-func DataRealLen(in *[]mtype.IM) *[]mtype.IM {
+func DataRealLen(in *[]bson.M) *[]bson.M {
 	var (
-		res = make([]mtype.IM, 0, confDb.Findlimit)
+		res = make([]bson.M, 0, confDb.Findlimit)
 		num = 0
 	)
 	for _, val := range *in {
@@ -126,10 +125,10 @@ func (m *Model) newQuery() *database.DataBaseQuery {
 	return query
 }
 
-func (m *Model) FindMany(cond mtype.IM, skip ...int) *[]mtype.IM {
+func (m *Model) FindMany(cond bson.M, skip ...int) *[]bson.M {
 	var (
 		limit  = confDb.Findlimit
-		result = make([]mtype.IM, limit)
+		result = make([]bson.M, limit)
 		query  = m.newQuery()
 		err    error
 	)
@@ -144,19 +143,17 @@ func (m *Model) FindMany(cond mtype.IM, skip ...int) *[]mtype.IM {
 	}
 
 	err = m.Db.QueryInit(query)
-	mlog.SaveErr(err)
 	if err != nil {
 		return nil
 	}
 	err = m.Db.Find(result)
-	mlog.SaveErr(err)
 	return DataRealLen(&result)
 }
 
-func (m *Model) FindOne(cond mtype.IM) *mtype.IM {
+func (m *Model) FindOne(cond bson.M) *bson.M {
 	var (
 		limit  = 1
-		result = make([]mtype.IM, limit)
+		result = make([]bson.M, limit)
 		query  = m.newQuery()
 		err    error
 	)
@@ -166,12 +163,10 @@ func (m *Model) FindOne(cond mtype.IM) *mtype.IM {
 	}
 
 	err = m.Db.QueryInit(query)
-	mlog.SaveErr(err)
 	if err != nil {
 		return nil
 	}
 	err = m.Db.Find(result)
-	mlog.SaveErr(err)
 	if len(result[0]) == 0 {
 		return nil
 	} else {
@@ -179,10 +174,10 @@ func (m *Model) FindOne(cond mtype.IM) *mtype.IM {
 	}
 }
 
-func (m *Model) FindLike(cond mtype.IM, skip ...int) *[]mtype.IM {
+func (m *Model) FindLike(cond bson.M, skip ...int) *[]bson.M {
 	var (
 		limit  = confDb.Findlimit
-		result = make([]mtype.IM, limit)
+		result = make([]bson.M, limit)
 		query  = m.newQuery()
 		err    error
 	)
@@ -198,7 +193,6 @@ func (m *Model) FindLike(cond mtype.IM, skip ...int) *[]mtype.IM {
 	query.Condition = cond
 
 	err = m.Db.QueryInit(query)
-	mlog.SaveErr(err)
 	if err != nil {
 		return nil
 	}
@@ -207,14 +201,13 @@ func (m *Model) FindLike(cond mtype.IM, skip ...int) *[]mtype.IM {
 	} else {
 		err = m.Db.FindLike(result)
 	}
-	mlog.Save(err)
 	return DataRealLen(&result)
 }
 
-func (m *Model) FindManyFromOtherTable(table string, cond mtype.IM, skip ...int) (*[]mtype.IM, error) {
+func (m *Model) FindManyFromOtherTable(table string, cond bson.M, skip ...int) (*[]bson.M, error) {
 	var (
 		limit  = confDb.Findlimit
-		result = make([]mtype.IM, limit)
+		result = make([]bson.M, limit)
 		query  = m.newQuery()
 		err    error
 	)
@@ -234,7 +227,6 @@ func (m *Model) FindManyFromOtherTable(table string, cond mtype.IM, skip ...int)
 		query.Condition = cond
 	}
 	err = m.Db.QueryInit(query)
-	mlog.SaveErr(err)
 	if err != nil {
 		return nil, err
 	}
@@ -245,10 +237,10 @@ func (m *Model) FindManyFromOtherTable(table string, cond mtype.IM, skip ...int)
 	return DataRealLen(&result), nil
 }
 
-func (m *Model) FindOneFromOtherTable(table string, cond mtype.IM) (*mtype.IM, error) {
+func (m *Model) FindOneFromOtherTable(table string, cond bson.M) (*bson.M, error) {
 	var (
 		limit  = 1
-		result = make([]mtype.IM, limit)
+		result = make([]bson.M, limit)
 		query  = m.newQuery()
 		err    error
 	)
@@ -262,7 +254,6 @@ func (m *Model) FindOneFromOtherTable(table string, cond mtype.IM) (*mtype.IM, e
 		query.Condition = cond
 	}
 	err = m.Db.QueryInit(query)
-	mlog.SaveErr(err)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +268,7 @@ func (m *Model) FindOneFromOtherTable(table string, cond mtype.IM) (*mtype.IM, e
 	}
 }
 
-func (m *Model) FindViaPage(page ...int) *[]mtype.IM {
+func (m *Model) FindViaPage(page ...int) *[]bson.M {
 	var (
 		pg   int
 		skip int
@@ -295,12 +286,11 @@ func (m *Model) FindViaPage(page ...int) *[]mtype.IM {
 	return m.FindMany(nil, skip)
 }
 
-func (m *Model) Add(data interface{}, id2 ...string) string {
+func (m *Model) Add(data bson.M, id2 ...string) string {
 	var (
 		query = m.newQuery()
 		id    string
 		err   error
-		tmp   mtype.SM
 	)
 	/*
 		t := reflect.TypeOf(data)
@@ -308,33 +298,27 @@ func (m *Model) Add(data interface{}, id2 ...string) string {
 			insDataAddr := mtype.Struct2Map(data)
 			insData = *insDataAddr
 		} else {
-			insData = data.(mtype.IM)
+			insData = data.(bson.M)
 		}
 	*/
 	t := reflect.TypeOf(data)
-	if reflect.TypeOf(tmp) == t {
-		tmp = data.(mtype.SM)
-		query.Data = (&tmp).ToIM()
-	} else {
-		query.Data = data
-	}
+
+	query.Data = data
 
 	if len(id2) == 1 {
 		query.Id = id2[0]
 	}
 
 	err = m.Db.QueryInit(query)
-	mlog.SaveErr(err)
 	if err != nil {
 		id = ""
 		return id
 	}
 	id, err = m.Db.Insert()
-	mlog.SaveErr(err)
 	return id
 }
 
-func (m *Model) AddToOtherTable(table string, data mtype.IM) (string, error) {
+func (m *Model) AddToOtherTable(table string, data bson.M) (string, error) {
 	var (
 		query = m.newQuery()
 		id    string
@@ -357,13 +341,13 @@ func (m *Model) AddToOtherTable(table string, data mtype.IM) (string, error) {
 	return id, nil
 }
 
-func (m *Model) UpdateById(id string, data mtype.IM, muti ...bool) error {
+func (m *Model) UpdateById(id string, data bson.M, muti ...bool) error {
 	var (
 		query = m.newQuery()
 		err   error
 	)
 	query.Update = data
-	query.Condition = mtype.IM{
+	query.Condition = bson.M{
 		"_id": id,
 	}
 	if len(muti) == 0 {
@@ -388,7 +372,7 @@ func (m *Model) DeleteById(id string) error {
 		query = m.newQuery()
 		err   error
 	)
-	query.Condition = mtype.IM{
+	query.Condition = bson.M{
 		"_id": id,
 	}
 	err = m.Db.QueryInit(query)
@@ -399,8 +383,8 @@ func (m *Model) DeleteById(id string) error {
 	return err
 }
 
-func (m *Model) FindById(id string) *mtype.IM {
-	cond := mtype.IM{
+func (m *Model) FindById(id string) *bson.M {
+	cond := bson.M{
 		"_id": id,
 	}
 	return m.FindOne(cond)
