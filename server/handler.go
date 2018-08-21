@@ -111,7 +111,7 @@ func CheckTheCode(w http.ResponseWriter, i *Input) {
 	u := newUser(nil)
 	defer u.End()
 
-	path := config.PatternTime("./data/", time.Now(), "/"+i.Email)
+	path := config.PatternTime(config.DataPath(), time.Now(), "/"+i.Email)
 
 	data := DataUser{
 		Username:      i.User,
@@ -126,7 +126,7 @@ func CheckTheCode(w http.ResponseWriter, i *Input) {
 		return
 	}
 
-	path = config.PatternTime("./data/", time.Now(), "/"+id)
+	path = config.PatternTime(config.DataPath(), time.Now(), "/"+id)
 	u.UpdateById(id, bson.M{
 		"data_path": path,
 	})
