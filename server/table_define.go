@@ -14,11 +14,11 @@ const (
 // 操作记录不存数据库，存进文本里
 )
 
-func newConnetction(name TableName, m model.Modeler) *model.Model {
+func newConnection(name TableName, m model.Modeler) *model.Model {
 	if m != nil {
 		m2, err := m.Copy(string(name))
 		if err != nil {
-			return newConnetction(name, nil)
+			return newConnection(name, nil)
 		}
 
 		return m2

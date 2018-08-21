@@ -2,6 +2,7 @@ package email
 
 import (
 	"net/smtp"
+	"regexp"
 	"strings"
 	"time"
 
@@ -30,6 +31,12 @@ var (
 		},
 	}
 )
+
+var emailRegexp = regexp.MustCompile(".+@.+\\..+")
+
+func IsEmailValid(m string) bool {
+	return emailRegexp.MatchString(m)
+}
 
 type OneEmail struct {
 	Type int

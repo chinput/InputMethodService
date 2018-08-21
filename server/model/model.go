@@ -77,18 +77,18 @@ func New() *Model {
 	return &model
 }
 
-func DataRealLen(in *[]bson.M) *[]bson.M {
+func DataRealLen(in []bson.M) []bson.M {
 	var (
 		res = make([]bson.M, 0, confDb.Findlimit)
 		num = 0
 	)
-	for _, val := range *in {
+	for _, val := range in {
 		if val != nil {
 			num++
 		}
 	}
-	res = append(res, (*in)[0:num]...)
-	return (&res)
+	res = append(res, in[0:num]...)
+	return res
 }
 
 func (m *Model) Copy(tb string) (*Model, error) {
@@ -123,7 +123,7 @@ func (m *Model) newQuery() *database.DataBaseQuery {
 	return query
 }
 
-func (m *Model) FindMany(cond bson.M, skip ...int) *[]bson.M {
+func (m *Model) FindMany(cond bson.M, skip ...int) []bson.M {
 	var (
 		limit  = confDb.Findlimit
 		result = make([]bson.M, limit)
@@ -145,10 +145,10 @@ func (m *Model) FindMany(cond bson.M, skip ...int) *[]bson.M {
 		return nil
 	}
 	err = m.Db.Find(result)
-	return DataRealLen(&result)
+	return DataRealLen(result)
 }
 
-func (m *Model) FindOne(cond bson.M) *bson.M {
+func (m *Model) FindOne(cond bson.M) bson.M {
 	var (
 		limit  = 1
 		result = make([]bson.M, limit)
@@ -168,11 +168,11 @@ func (m *Model) FindOne(cond bson.M) *bson.M {
 	if len(result[0]) == 0 {
 		return nil
 	} else {
-		return &result[0]
+		return result[0]
 	}
 }
 
-func (m *Model) FindLike(cond bson.M, skip ...int) *[]bson.M {
+func (m *Model) FindLike(cond bson.M, skip ...int) []bson.M {
 	var (
 		limit  = confDb.Findlimit
 		result = make([]bson.M, limit)
@@ -199,74 +199,10 @@ func (m *Model) FindLike(cond bson.M, skip ...int) *[]bson.M {
 	} else {
 		err = m.Db.FindLike(result)
 	}
-	return DataRealLen(&result)
+	return DataRealLen(result)
 }
 
-func (m *Model) FindManyFromOtherTable(table string, cond bson.M, skip ...int) (*[]bson.M, error) {
-	var (
-		limit  = confDb.Findlimit
-		result = make([]bson.M, limit)
-		query  = m.newQuery()
-		err    error
-	)
-	if table == "" {
-		return nil, errors.New("tbname_empty" + "table name is empty")
-	} else {
-		query.TableName = table
-	}
-
-	if len(skip) == 0 {
-		query.Skip = 0
-	} else {
-		query.Skip = skip[0]
-	}
-	query.Limit = limit
-	if cond != nil {
-		query.Condition = cond
-	}
-	err = m.Db.QueryInit(query)
-	if err != nil {
-		return nil, err
-	}
-	err = m.Db.Find(result)
-	if err != nil {
-		return nil, err
-	}
-	return DataRealLen(&result), nil
-}
-
-func (m *Model) FindOneFromOtherTable(table string, cond bson.M) (*bson.M, error) {
-	var (
-		limit  = 1
-		result = make([]bson.M, limit)
-		query  = m.newQuery()
-		err    error
-	)
-	if table != "" {
-		query.TableName = table
-	} else {
-		return nil, errors.New("tbname_empty" + "table name is empty")
-	}
-	query.Skip = 0
-	if cond != nil {
-		query.Condition = cond
-	}
-	err = m.Db.QueryInit(query)
-	if err != nil {
-		return nil, err
-	}
-	err = m.Db.Find(result)
-	if err != nil {
-		return nil, err
-	}
-	if len(result[0]) == 0 {
-		return nil, nil
-	} else {
-		return &result[0], nil
-	}
-}
-
-func (m *Model) FindViaPage(page ...int) *[]bson.M {
+func (m *Model) FindViaPage(page ...int) []bson.M {
 	var (
 		pg   int
 		skip int
@@ -361,7 +297,7 @@ func (m *Model) DeleteById(id string) error {
 	return err
 }
 
-func (m *Model) FindById(id string) *bson.M {
+func (m *Model) FindById(id string) bson.M {
 	cond := bson.M{
 		"_id": id,
 	}

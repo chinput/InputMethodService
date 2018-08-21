@@ -28,6 +28,12 @@ type Config struct {
 	EmailPass string `toml:"email_pass"`
 	// 邮件发送最短间隔，单位 ms
 	EmailTimeout int64 `toml:"email_timeout"`
+
+	// 存储用户数据文件的目录
+	DataPath string `toml:"data_path"`
+
+	// 用于下载文件的临时目录，5分钟清理一次
+	TmpPath string `toml:"tmp_path"`
 }
 
 var cfg *Config
@@ -95,5 +101,16 @@ func DecodeB64(data string) ([]byte, error) {
 }
 
 func EmailConfig() (string, string, string, int64) {
+	if cfg == nil {
+		return "", "", "", 0
+	}
 	return cfg.EmailHost, cfg.EmailUser, cfg.EmailPass, cfg.EmailTimeout
+}
+
+func TmpPath() string {
+	return cfg.TmpPath
+}
+
+func DataPath() string {
+	return cfg.DataPath
 }
