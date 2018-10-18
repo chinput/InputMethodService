@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"log"
 
 	"github.com/chinput/InputMethodService/server/model/database"
 	"gopkg.in/mgo.v2/bson"
@@ -72,6 +73,8 @@ func New() *Model {
 	}
 	model.Db, err = database.New(confDb.Dbhost, confDb.Dbname)
 	if err != nil {
+		log.Fatal(err)
+
 		return nil
 	}
 	return &model

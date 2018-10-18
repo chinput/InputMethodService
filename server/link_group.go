@@ -81,7 +81,7 @@ func (lg *LinkGroup) Check() {
 func (lg *LinkGroup) CheckExpire() {
 	for (!lg.end) || len(lg.data) > 0 {
 		<-time.After(lg.during)
-		log.Println("LinkGroup check expire")
+		//		log.Println("LinkGroup check expire")
 		lg.Check()
 	}
 

@@ -60,9 +60,14 @@ var (
 )
 
 func newOutput(status int, url, user, token string) *Output {
+	desc := "error"
+	if len(outputMap) > status {
+		desc = outputMap[status]
+	}
+
 	return &Output{
 		Status: status,
-		Desc:   outputMap[0],
+		Desc:   desc,
 		Url:    url,
 		User:   user,
 		Token:  token,
@@ -79,9 +84,29 @@ func writeOutError(w io.Writer, status int) {
 	writeOutputTo(w, status, "", "", "")
 }
 
+func EmailExistInDB(email_str string) bool {
+	u := newUser(nil)
+	defer u.End()
+
+	exist_user := u.FindOne(bson.M{
+		"email": email_str,
+	})
+
+	if exist_user != nil {
+		return true
+	}
+
+	return false
+}
+
 func Register(w http.ResponseWriter, i *Input) {
 	if i.Email == "" {
 		writeOutError(w, 5)
+		return
+	}
+
+	if EmailExistInDB(i.Email) {
+		writeOutError(w, 15)
 		return
 	}
 
@@ -94,17 +119,27 @@ func Register(w http.ResponseWriter, i *Input) {
 }
 
 func CheckTheCode(w http.ResponseWriter, i *Input) {
+
 	regpool.lock.Lock()
 	defer regpool.lock.Unlock()
 
 	exist := regpool.group[i.Email]
+	if exist == nil {
+		writeOutError(w, 10)
+		return
+	}
 	if exist.code != i.Code {
 		writeOutError(w, 10)
 		return
 	}
 
-	if exist.time.Add(time.Second * 30).Before(time.Now()) {
+	if exist.time.Add(time.Minute * 15).Before(time.Now()) {
 		writeOutError(w, 11)
+		return
+	}
+
+	if EmailExistInDB(i.Email) {
+		writeOutError(w, 15)
 		return
 	}
 
@@ -346,6 +381,8 @@ func UploadFile(w http.ResponseWriter, i *Input) {
 
 	userPath := user_info.DataPath
 
+	os.MkdirAll(userPath, 0755)
+
 	for _, oneFile := range r.File {
 		fullName := filepath.Join(userPath, oneFile.Name)
 		wp, err := os.Create(fullName)
@@ -379,9 +416,25 @@ var (
 	}
 )
 
+const DEBUG bool = true
+
+func decReqBuffer(buff string) ([]byte, error) {
+	if DEBUG {
+		return []byte(buff), nil
+	}
+	return config.DecodeB64(buff)
+}
+
 func CommonHandler(w http.ResponseWriter, r *http.Request) {
 
-	reqBuffer, err := config.DecodeB64(r.FormValue("q"))
+	buff := r.FormValue("q")
+
+	if buff == "" {
+		writeOutError(w, 2)
+		return
+	}
+
+	reqBuffer, err := decReqBuffer(buff)
 
 	if err != nil {
 		writeOutError(w, 2)
@@ -414,3 +467,10 @@ func CommonHandler(w http.ResponseWriter, r *http.Request) {
 		fn(w, req)
 	}
 }
+
+/*
+{
+	"Type":0,
+	"Email":"garfeng_gu@163.com"
+}
+*/

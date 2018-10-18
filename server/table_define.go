@@ -1,6 +1,10 @@
 package main
 
-import "github.com/chinput/InputMethodService/server/model"
+import (
+	"log"
+
+	"github.com/chinput/InputMethodService/server/model"
+)
 
 type TableName string
 
@@ -25,5 +29,16 @@ func newConnection(name TableName, m model.Modeler) *model.Model {
 	}
 
 	m0 := model.New()
-	return m0
+
+	if m0 == nil {
+		log.Fatal(nil)
+	}
+
+	m2, err := m0.Copy(string(name))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return m2
 }

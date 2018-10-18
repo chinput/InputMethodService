@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"math/rand"
 	"sync"
 	"time"
@@ -59,6 +60,8 @@ func SendRegisterCode(email_addr string) error {
 	}
 
 	code := newRegisterCode()
+
+	log.Println("register code:", code)
 
 	regpool.group[email_addr] = &registeCode{
 		email: email_addr,

@@ -54,6 +54,9 @@ func Init(configPath string) {
 }
 
 func DBUrl() string {
+	if cfg.DBUser == "" || cfg.DBPass == "" {
+		return cfg.DBHost
+	}
 	return cfg.DBUser + ":" + cfg.DBPass + "@" + cfg.DBHost
 }
 

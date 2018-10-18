@@ -24,7 +24,7 @@ var (
 	emailType      = []EmailType{
 		{
 			subject:     common_subject + "注册码",
-			common_data: "您正在注册" + common_subject + "，以下是您的注册码：",
+			common_data: "您正在注册" + common_subject + "，以下是您的注册码（15分钟内有效）：",
 		}, {
 			subject:     common_subject + "重置密码",
 			common_data: "您正在充值" + common_subject + "的用户密码，以下是您的验证码：",
